@@ -23,7 +23,12 @@ library(cowplot)
 require(cem)
 
 ######################################################################
-#------------------Data  Loading and Pre-processing-------------------
+#This file holds replication code for Data Pre-processing and Loading#                       #  
+#Violence and civilian loyalties: evidence from Afghanistan          #
+#2015 by S. Schutte                                                  #
+######################################################################
+######################################################################
+#------------------Data Pre-processing and Loading-------------------
 ######################################################################
 
 setwd("C:/Users/Rohan Das/Documents/Rohan_Docs/Study/Semester 4/Vis Hiwi/jcr/rnr2/data")
@@ -76,8 +81,8 @@ treatment_data$momentum <- 0
 treatment_data$trend <- 0
 
 #Time & spatio Window initialization
-delta_time <- 10
-delta_s <- 10
+delta_time <- 20
+delta_s <- 20
 
 for(i in 1:nrow(treatment_data)) {
   count <- 0
@@ -142,6 +147,11 @@ for(i in 1:nrow(treatment_data)) {
     # Trend Calculation
     trend <- upper_cylinder / lower_cylinder
     
+    # Inf trend values converted to 0
+    if (trend == Inf){
+      trend <- 0
+    }
+    
     # Assign count of dependent events as momentum and trend 
     treatment_data[i, 18] <- count
     treatment_data[i, 19] <- trend
@@ -161,13 +171,15 @@ data$timestamp <- d_timestep
 #----------------------------Applying CEM--------------------------------
 #########################################################################
 
-
 # cem match: automatic bin choice
 mat <- cem(treatment= "event_type", data=data)
 
 #Adding matches to the data dataset
 data$matches <- mat$matched
 
+#Exporting data for visualization
+setwd("C:/Users/Rohan Das/Documents/Rohan_Docs/Study/Semester 4/Vis Hiwi/katermurr-d3_application_template-41613825fd48 (1)/katermurr-d3_application_template-41613825fd48/data")
+write.csv(data,"CEM_data.csv", row.names = FALSE)
 #########################################################################
 #----------------------------Visualization--------------------------------
 #########################################################################
@@ -183,7 +195,6 @@ hist_pak <- ggplot(data) +
 hist_pak <- hist_pak+scale_color_manual(values=c("#FFFFFF", "#FFFFFF"))+
   scale_fill_manual(values=c("#000000", "#FCF500"))
 
-hist_pak
 hist_kabul <- ggplot(data) +
   geom_histogram(aes(x=dist_kabul, color = matches,  fill=matches),
                  breaks=mat$breaks$dist_kabul,alpha=0.7, position="identity")+
@@ -193,16 +204,6 @@ hist_kabul <- ggplot(data) +
 hist_kabul <- hist_kabul+scale_color_manual(values=c("#FFFFFF", "#FFFFFF"))+
   scale_fill_manual(values=c("#000000", "#FCF500"))
 
-hist_elevation <- ggplot(data) +
-  geom_histogram(aes(x=hist_elevation, color = matches,  fill=matches),
-                 breaks=mat$breaks$hist_elevation,alpha=0.7, position="identity")+
-  #scale_x_continuous(breaks = mat$breaks$dist_pak)+ # Adds tick values to the plot
-  theme(legend.position="top")
-
-hist_elevation <- hist_elevation+scale_color_manual(values=c("#FFFFFF", "#FFFFFF"))+
-  scale_fill_manual(values=c("#000000", "#FCF500"))
-
-hist_elevation
 hist_pop <- ggplot(data) +
   geom_histogram(aes(x=population, color = matches,  fill=matches),
                  breaks=mat$breaks$population,alpha=0.7, position="identity")+
@@ -233,5 +234,5 @@ hist_gecon <- hist_gecon+scale_color_manual(values=c("#FFFFFF", "#FFFFFF"))+
 # Merge different graphs in one
 plot_grid(hist_pak, hist_kabul, hist_pop, hist_los, hist_gecon,
           labels = c('Distance to Pak', 'Dist to Kabul',
-          'Population','LineofSight','Gecon'))
+                     'Population','LineofSight','Gecon'))
 
